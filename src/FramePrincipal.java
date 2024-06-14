@@ -159,41 +159,19 @@ public class FramePrincipal extends JFrame implements ActionListener {
             byte[][] responseImages;
             if (option == radioSecuencial.getModel()) {
                 System.out.println("Secuencial");
-                try {
-                    responseImages = server.getImages(compressionQuality, 1);
-                    int i = 0;
-                    for (byte[] image : responseImages) {
-                        BufferedImage bufferedImage = ImageUtils.byteArrayToImage(image);
-                        ImageUtils.saveImage(bufferedImage,i, outputFolderSelected);
-                        i++;
-                    }
-                    long endTime = System.currentTimeMillis();
-                    long result = endTime - startTime;
-                    label.setText("Secuencial: " + result + "ms");
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
+                writeImages(compressionQuality,1);
+                long endTime = System.currentTimeMillis();
+                long result = endTime - startTime;
+                label.setText("Secuencial: " + result + "ms");
             } else if (option == radioExecutor.getModel()) {
                 System.out.println("Executor");
-                //ImageCompressorExecutor compressor = new ImageCompressorExecutor(originFolderSelected,compressionQuality, outputFolderSelected);
-                //compressor.startCompression();
-                try{
-                    server.getImages(compressionQuality, 3);
-                }catch (IOException ex){
-                    throw new RuntimeException(ex);
-                }
+                writeImages(compressionQuality,3);
                 long endTime = System.currentTimeMillis();
                 long result =endTime - startTime;
                 lblResultadoExecutor.setText("Executor: " + result + "ms");
             } else if (option == radioForkJoin.getModel()) {
                 System.out.println("Fork Join");
-                //ImageCompressionTask compressor = new ImageCompressionTask(originFolderSelected, compressionQuality, outputFolderSelected);
-                //compressor.startCompression();
-                try{
-                    server.getImages(compressionQuality, 2);
-                }catch (IOException ex){
-                    throw new RuntimeException(ex);
-                }
+                writeImages(compressionQuality,2);
                 long endTime = System.currentTimeMillis();
                 long result =  (endTime - startTime);
                 lblResultadoFork.setText("Fork Join: " + result + "ms");
@@ -203,7 +181,7 @@ public class FramePrincipal extends JFrame implements ActionListener {
             double finalSize = ImageCompressor.getDirectorySize(Path.of(outputFolderSelected))/1000000.0;
             String result = "Tamaño carpeta salida: " + finalSize + " Megabytes";
             result += "\n" + "Porcentaje de compresion: " + compressionQuality*100 + "%";
-            //result += "\n" + "Imagenes comprimidas: " + size ;
+            result += "\n" + "Imagenes comprimidas: " + imageCount;
             txtAResults.setText(result);
         }
         if (e.getSource() == button2) {
@@ -246,6 +224,22 @@ public class FramePrincipal extends JFrame implements ActionListener {
             }
         }
     }
+
+    private void writeImages(float compressionQuality, int method) {
+        byte[][] responseImages;
+        int i = 0;
+        try{
+            responseImages = server.getImages(compressionQuality, method);
+            for (byte[] image : responseImages) {
+                BufferedImage bufferedImage = ImageUtils.byteArrayToImage(image);
+                ImageUtils.saveImage(bufferedImage,i, outputFolderSelected);
+                i++;
+            }
+        }catch (IOException ex){
+            throw new RuntimeException(ex);
+        }
+    }
+
     public String showFileSelector(String title){
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -266,23 +260,6 @@ public class FramePrincipal extends JFrame implements ActionListener {
         } catch (RemoteException | NotBoundException e) {
             e.printStackTrace();
         }
-        try {
-            // Conectar al registro RMI y obtener la referencia del servidor
-            // Cargar una imagen desde el disco
-            //File file = new File("src/resources/Sockets.png");
-            //System.out.println(file.getAbsolutePath());
-            //BufferedImage imagen = ImageIO.read(file);
-            //byte[] byteImage = ImageUtils.imageToByteArray(imagen);
-            // Enviar la imagen al servidor
-            //String clientName = JOptionPane.showInputDialog("Ingresa tu nombre");
-            //servidor.register(clientName);
-            //servidor.sendResponse(clientName,byteImage);
-            //System.out.println("Imagen enviada al servidor.");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 }
 

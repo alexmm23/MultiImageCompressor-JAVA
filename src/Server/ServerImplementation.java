@@ -12,6 +12,9 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
+
 import Client.ClientImplementation;
 
 public class ServerImplementation extends UnicastRemoteObject implements ServerInterface {
@@ -89,10 +92,45 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
                 System.out.println("Secuencial");
             case 2:
                 // Fork Join
+                ForkJoinPool forkJoinPool = new ForkJoinPool();
+                ForkJoinTask<Void> task = new RecursiveAction() {
+                    @Override
+                    protected void compute() {
+                        List<RecursiveAction> tasks = new ArrayList<>();
+                        for (int i = 0; i < images.size(); i++) {
+                            final int index = i;
+                            tasks.add(new RecursiveAction() {
+                                @Override
+                                protected void compute() {
+                                    try {
+                                        responseImages[index] = ImageCompressor.compressImage(images.get(index), quality);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                        }
+                        invokeAll(tasks);
+                    }
+                };
+                forkJoinPool.invoke(task);
                 System.out.println("Fork Join");
                 break;
             case 3:
                 // Executor service
+                ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+                List<Future<byte[]>> futures = new ArrayList<>();
+                for (BufferedImage image : images) {
+                    futures.add(executor.submit(() -> ImageCompressor.compressImage(image, quality)));
+                }
+                for (int j = 0; j< futures.size(); j++) {
+                    try {
+                        responseImages[j] = futures.get(j).get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                }
+                executor.shutdown();
                 System.out.println("Executor service");
                 break;
             default:
