@@ -1,6 +1,7 @@
 package Server;
 
 import Client.Client;
+import Logic.ImageCompressor;
 import Utils.ImageUtils;
 
 import javax.imageio.ImageIO;
@@ -14,14 +15,12 @@ import java.util.ArrayList;
 import Client.ClientImplementation;
 
 public class ServerImplementation extends UnicastRemoteObject implements ServerInterface {
+    private static ArrayList<Client> clients = new ArrayList<Client>();
+    private static ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
 
     public ServerImplementation() throws RemoteException {
         super();
     }
-
-
-    private static ArrayList<Client> clients = new ArrayList<Client>();
-    private static ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
     @Override
     public void register(String name) throws RemoteException {
         clients.add(new ClientImplementation(name));
@@ -31,6 +30,10 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
     @Override
     public String call(String message) throws RemoteException {
         return message;
+    }
+    @Override
+    public int getImagesCount() throws RemoteException {
+        return images.size();
     }
 
     @Override
@@ -43,6 +46,14 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    @Override
+    public double getTotalSize() throws RemoteException {
+        double totalSize = 0;
+        for(BufferedImage image : images){
+            totalSize += image.getData().getDataBuffer().getSize();
+        }
+        return totalSize;
     }
 
     @Override
@@ -60,11 +71,21 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
     }
 
     @Override
-    public byte[][] sendImages(float quality, int method) throws RemoteException {
-        byte[][] responseImages;
+    public byte[][] getImages(float quality, int method) throws RemoteException {
+        byte[][] responseImages = new byte[images.size()][];
+        int i= 0;
         switch (method){
             case 1:
                 //Secuencial
+                for(BufferedImage image : images){
+                    try {
+                        byte[] compressedImage = ImageCompressor.compressImage(image, quality);
+                        responseImages[i] = compressedImage;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    i++;
+                }
                 System.out.println("Secuencial");
             case 2:
                 // Fork Join
@@ -77,7 +98,7 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
             default:
                 System.out.println("Invalid method");
         }
-        return new byte[0][];
+        return responseImages;
     }
 
     public static void main(String[] args){

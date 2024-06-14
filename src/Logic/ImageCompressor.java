@@ -1,9 +1,16 @@
 package Logic;
 
+import Utils.ImageUtils;
+
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -64,8 +71,9 @@ public class ImageCompressor {
         }
         return names;
     }
-    public void startCompression(float quality) throws IOException {
+    public byte[][] startCompression(float quality) throws IOException {
         int iterator = 0;
+        byte[][] compressedImages = new byte[imageNames.length-1][];
         for(String imageName: imageNames){
             if(!imageName.contains("jpg") && !imageName.contains("jpeg") && !imageName.contains("png")) {
                 continue;
@@ -73,12 +81,7 @@ public class ImageCompressor {
             System.out.println("Archivo valido");
             int startingIndex = imageName.indexOf(".");
             if(startingIndex != -1){
-                String extension = imageName.substring(startingIndex);
-                String slicedName = imageName.substring(0,startingIndex);
-                System.out.println(extension);
-                System.out.println(slicedName);
                 String filePath = imageDir +"/"+ imageName;
-                System.out.println(filePath);
                 //Leer la imagen
                 ImageIcon imageIcon = new ImageIcon(filePath);
                 BufferedImage originalImage = ImageIO.read(new File(filePath));
@@ -92,12 +95,36 @@ public class ImageCompressor {
                 Graphics2D g2d = resizedImage.createGraphics();
                 g2d.drawImage(originalImage,0,0,newWidth,newHeight,null);
                 g2d.dispose();
+                //Convertir las imagenes redimensionadas a byte[]
+                byte[] compressedImage = ImageUtils.imageToByteArray(resizedImage);
+                compressedImages[iterator] = compressedImage;
                 //Guardar imagen redimensionada
-                File compressedImageFile = new File(this.targetDir+File.separator+iterator+extension);
-                ImageIO.write(resizedImage,extension.substring(1),compressedImageFile);
+                //File compressedImageFile = new File(this.targetDir+File.separator+iterator+extension);
+                //ImageIO.write(resizedImage,extension.substring(1),compressedImageFile);
                 iterator++;
                 System.out.println("redimensionada con exito!");
             }
         }
+        return compressedImages;
+    }
+    public static byte[] compressImage(BufferedImage image, float quality) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ImageWriter writer = ImageIO.getImageWritersByFormatName("png").next();
+        ImageOutputStream ios = ImageIO.createImageOutputStream(byteArrayOutputStream);
+        writer.setOutput(ios);
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        if (param.canWriteCompressed()) {
+            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            param.setCompressionQuality(quality);
+        }
+
+        writer.write(null, new IIOImage(image, null, null), param);
+
+        byte[] compressedImage = byteArrayOutputStream.toByteArray();
+        ios.close();
+        writer.dispose();
+
+        return compressedImage;
     }
 }

@@ -24,4 +24,7 @@ public class ImageUtils {
         }
         return images;
     }
+    public static void saveImage(BufferedImage image,int id,  String outputDir) throws IOException {
+        ImageIO.write(image, "png", new File(outputDir + File.separator + "compressed_" + id + ".png"));
+    }
 }

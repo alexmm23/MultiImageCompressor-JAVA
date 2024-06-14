@@ -1,14 +1,10 @@
-import Logic.ImageCompressionTask;
 import Logic.ImageCompressor;
-import Logic.ImageCompressorExecutor;
 import Server.ServerInterface;
 import Utils.ImageUtils;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.rmi.NotBoundException;
@@ -17,7 +13,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 
 public class FramePrincipal extends JFrame implements ActionListener {
     private JButton button1;
@@ -148,21 +143,30 @@ public class FramePrincipal extends JFrame implements ActionListener {
             if(originFolderSelected.isEmpty() || outputFolderSelected.isEmpty()){
                 JOptionPane.showMessageDialog(null, "Por favor selecciona un directorio de imagenes", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
-            }/*
-            ImageCompressor i = new ImageCompressor(originFolderSelected,outputFolderSelected);
-            Map<String,Long> firstMap = i.loadImages();
-            final int size = firstMap.size() +1;
-            String firstMapString = "Cantidad de imagenes encontradas: "+size + "\n";
-            double totalSize = ImageCompressor.getDirectorySize(Path.of(originFolderSelected))/1000000.0;
+            }
+            int imageCount = 0;
+            double totalSize = 0;
+            try{
+                imageCount = server.getImagesCount();
+                totalSize = server.getTotalSize()/1000000.0;
+            }catch (RemoteException ex) {
+                throw new RuntimeException(ex);
+            }
+            String firstMapString = "Cantidad de imagenes encontradas: "+imageCount + "\n";
             firstMapString += "\n" + totalSize+ " Megabytes";
             txtAFirstArray.setText(firstMapString);
-            */
             var option = group.getSelection();
+            byte[][] responseImages;
             if (option == radioSecuencial.getModel()) {
                 System.out.println("Secuencial");
                 try {
-                    server.sendImages(compressionQuality, 1);
-                    //i.startCompression(compressionQuality);
+                    responseImages = server.getImages(compressionQuality, 1);
+                    int i = 0;
+                    for (byte[] image : responseImages) {
+                        BufferedImage bufferedImage = ImageUtils.byteArrayToImage(image);
+                        ImageUtils.saveImage(bufferedImage,i, outputFolderSelected);
+                        i++;
+                    }
                     long endTime = System.currentTimeMillis();
                     long result = endTime - startTime;
                     label.setText("Secuencial: " + result + "ms");
@@ -174,7 +178,7 @@ public class FramePrincipal extends JFrame implements ActionListener {
                 //ImageCompressorExecutor compressor = new ImageCompressorExecutor(originFolderSelected,compressionQuality, outputFolderSelected);
                 //compressor.startCompression();
                 try{
-                    server.sendImages(compressionQuality, 3);
+                    server.getImages(compressionQuality, 3);
                 }catch (IOException ex){
                     throw new RuntimeException(ex);
                 }
@@ -186,7 +190,7 @@ public class FramePrincipal extends JFrame implements ActionListener {
                 //ImageCompressionTask compressor = new ImageCompressionTask(originFolderSelected, compressionQuality, outputFolderSelected);
                 //compressor.startCompression();
                 try{
-                    server.sendImages(compressionQuality, 2);
+                    server.getImages(compressionQuality, 2);
                 }catch (IOException ex){
                     throw new RuntimeException(ex);
                 }

@@ -1,9 +1,5 @@
 package Server;
 
-import Client.Client;
-
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferDouble;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -12,6 +8,8 @@ public interface ServerInterface extends Remote {
     String call(String message) throws RemoteException;
     void sendResponse(String clientName, byte[] byteImage) throws RemoteException;
     void receiveImages(byte[][] images) throws RemoteException;
-    byte[][] sendImages(float quality, int method) throws RemoteException;
+    byte[][] getImages(float quality, int method) throws RemoteException;
+    int getImagesCount() throws RemoteException;
+    double getTotalSize() throws RemoteException;
 
 }
