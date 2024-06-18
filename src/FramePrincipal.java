@@ -156,7 +156,6 @@ public class FramePrincipal extends JFrame implements ActionListener {
             firstMapString += "\n" + totalSize+ " Megabytes";
             txtAFirstArray.setText(firstMapString);
             var option = group.getSelection();
-            byte[][] responseImages;
             if (option == radioSecuencial.getModel()) {
                 System.out.println("Secuencial");
                 writeImages(compressionQuality,1);
@@ -165,9 +164,9 @@ public class FramePrincipal extends JFrame implements ActionListener {
                 label.setText("Secuencial: " + result + "ms");
             } else if (option == radioExecutor.getModel()) {
                 System.out.println("Executor");
-                writeImages(compressionQuality,3);
                 long endTime = System.currentTimeMillis();
-                long result =endTime - startTime;
+                writeImages(compressionQuality,3);
+                long result = endTime - startTime;
                 lblResultadoExecutor.setText("Executor: " + result + "ms");
             } else if (option == radioForkJoin.getModel()) {
                 System.out.println("Fork Join");
